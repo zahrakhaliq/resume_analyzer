@@ -9,13 +9,13 @@ Ties together all 5 workflow steps:
   5. output           -> final_report (displayed here)
 
 API KEY:
-This app expects ANTHROPIC_API_KEY to be set in Streamlit secrets
+This app expects GROQ_API_KEY to be set in Streamlit secrets
 (Settings -> Secrets, or .streamlit/secrets.toml locally):
 
-    ANTHROPIC_API_KEY = "sk-ant-..."
+    GROQ_API_KEY = "gsk_..."
 
 The key is never written in code. We read it from st.secrets and export it to
-the environment so extraction.py / recommendations.py (via the anthropic SDK)
+the environment so extraction.py / recommendations.py (via the groq SDK)
 can pick it up automatically.
 """
 
@@ -23,9 +23,9 @@ import os
 import streamlit as st
 
 # --- Load API key from Streamlit secrets into the environment BEFORE importing
-# modules that create an anthropic.Anthropic() client ---
-if "ANTHROPIC_API_KEY" in st.secrets:
-    os.environ["ANTHROPIC_API_KEY"] = st.secrets["ANTHROPIC_API_KEY"]
+# modules that create a Groq() client ---
+if "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 from input_parsing import parse_resume, parse_job_description, ParsingError
 from extraction import extract_resume_data, extract_jd_data
@@ -39,9 +39,9 @@ st.set_page_config(page_title="AI Resume Analyzer", page_icon="📄", layout="wi
 st.title("📄 AI Resume Analyzer")
 st.caption("Upload your resume and paste a job description to see how well you match.")
 
-if "ANTHROPIC_API_KEY" not in os.environ:
+if "GROQ_API_KEY" not in os.environ:
     st.error(
-        "No API key found. Please add ANTHROPIC_API_KEY in your Streamlit app's "
+        "No API key found. Please add GROQ_API_KEY in your Streamlit app's "
         "Secrets before running an analysis."
     )
 
@@ -67,7 +67,7 @@ if analyze_clicked:
     if not jd_input or not jd_input.strip():
         st.warning("Please paste a job description.")
         st.stop()
-    if "ANTHROPIC_API_KEY" not in os.environ:
+    if "GROQ_API_KEY" not in os.environ:
         st.stop()
 
     try:
