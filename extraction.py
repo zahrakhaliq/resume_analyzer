@@ -18,7 +18,7 @@ import json
 import re
 from groq import Groq
 
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = "openai/gpt-oss-120b"
 
 RESUME_EXTRACTION_PROMPT = """You are an expert resume parser. Extract structured information
 from the resume text below. Return ONLY valid JSON, no other text, no markdown fences.
