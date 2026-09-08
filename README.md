@@ -18,11 +18,11 @@
 2. Add your API key in Streamlit secrets — **do not put it in code.**
    - On Streamlit Community Cloud: go to your app → Settings → Secrets, and add:
      ```
-     ANTHROPIC_API_KEY = "sk-ant-your-key-here"
+     GROQ_API_KEY = "gsk_your-key-here"
      ```
    - Locally: create `.streamlit/secrets.toml` in the project folder:
      ```
-     ANTHROPIC_API_KEY = "sk-ant-your-key-here"
+     GROQ_API_KEY = "gsk_your-key-here"
      ```
 
 3. Run the app:
@@ -31,9 +31,12 @@
    ```
 
 ## Notes
-- Uses the `anthropic` Python SDK (Claude). The API key is read from
-  `st.secrets["ANTHROPIC_API_KEY"]` in `app.py` and exported to the environment —
-  it's never hardcoded anywhere.
+- Uses the `groq` Python SDK, model `openai/gpt-oss-120b` (Groq deprecated its Llama
+  chat models — this is their current recommended general-purpose model). The API
+  key is read from `st.secrets["GROQ_API_KEY"]` in `app.py` and exported to the
+  environment — it's never hardcoded anywhere. Swap `MODEL_NAME` in `extraction.py` /
+  `recommendations.py` if you want a different Groq-hosted model (e.g. the smaller
+  `openai/gpt-oss-20b`).
 - Supported resume formats: PDF, DOCX, TXT.
 - Scoring weights (in `scoring.py`) are adjustable: skills 55%, ATS keywords 25%,
   experience 15%, resume quality 5%.
