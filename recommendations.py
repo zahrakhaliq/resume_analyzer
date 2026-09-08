@@ -18,7 +18,7 @@ import json
 import re
 from groq import Groq
 
-MODEL_NAME = "llama-3.3-70b-versatile"
+MODEL_NAME = "openai/gpt-oss-120b"
 
 RECOMMENDATION_PROMPT = """You are an expert resume coach and ATS specialist.
 Based on the analysis data below, identify specific PROBLEMS with this resume
