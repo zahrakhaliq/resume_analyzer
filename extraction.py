@@ -5,20 +5,20 @@ What it does : Pulls structured data out of unstructured resume_text and jd_text
                 (skills, experience, education, titles, required qualifications, keywords).
 Gets         : resume_text (str), jd_text (str)
 Gives        : resume_data (dict), jd_data (dict)
-Uses         : AI (Claude) — understanding unstructured, free-form text needs an LLM,
-                not rule-based Python.
+Uses         : AI (via Groq API) — understanding unstructured, free-form text needs
+                an LLM, not rule-based Python.
 
 NOTE ON API KEY:
-The Anthropic client reads the key from the ANTHROPIC_API_KEY environment variable.
-In app.py we set this from st.secrets["ANTHROPIC_API_KEY"] at startup, so no key is
+The Groq client reads the key from the GROQ_API_KEY environment variable.
+In app.py we set this from st.secrets["GROQ_API_KEY"] at startup, so no key is
 ever hardcoded here.
 """
 
 import json
 import re
-import anthropic
+from groq import Groq
 
-MODEL_NAME = "claude-sonnet-4-5"
+MODEL_NAME = "llama-3.3-70b-versatile"
 
 RESUME_EXTRACTION_PROMPT = """You are an expert resume parser. Extract structured information
 from the resume text below. Return ONLY valid JSON, no other text, no markdown fences.
@@ -60,22 +60,20 @@ Job description text:
 """
 
 
-def _get_client() -> anthropic.Anthropic:
-    """Creates an Anthropic client using the API key from the environment."""
-    return anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env automatically
+def _get_client() -> Groq:
+    """Creates a Groq client using the API key from the environment."""
+    return Groq()  # reads GROQ_API_KEY from env automatically
 
 
-def _call_claude_for_json(client: anthropic.Anthropic, prompt: str) -> dict:
-    """Sends a prompt to Claude and parses the response as JSON."""
-    response = client.messages.create(
+def _call_llm_for_json(client: Groq, prompt: str) -> dict:
+    """Sends a prompt to the Groq-hosted model and parses the response as JSON."""
+    response = client.chat.completions.create(
         model=MODEL_NAME,
         max_tokens=1500,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    raw_text = "".join(
-        block.text for block in response.content if block.type == "text"
-    )
+    raw_text = response.choices[0].message.content
 
     # Strip markdown fences if the model added them despite instructions
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
@@ -100,7 +98,7 @@ def extract_resume_data(resume_text: str) -> dict:
     """
     client = _get_client()
     prompt = RESUME_EXTRACTION_PROMPT.format(resume_text=resume_text)
-    data = _call_claude_for_json(client, prompt)
+    data = _call_llm_for_json(client, prompt)
 
     # Basic safety defaults in case the model omits a field
     data.setdefault("skills", [])
@@ -128,7 +126,7 @@ def extract_jd_data(jd_text: str) -> dict:
     """
     client = _get_client()
     prompt = JD_EXTRACTION_PROMPT.format(jd_text=jd_text)
-    data = _call_claude_for_json(client, prompt)
+    data = _call_llm_for_json(client, prompt)
 
     data.setdefault("required_skills", [])
     data.setdefault("preferred_skills", [])
