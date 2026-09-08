@@ -6,19 +6,19 @@ What it does : Turns the raw gaps/scores from Step 3 into human-readable problem
 Gets         : matching_skills, missing_skills, ats_keywords_status, match_score,
                 resume_text
 Gives        : problems (list of str), recommendations (list of str)
-Uses         : AI (Claude) — natural language generation of specific, useful advice
-                is not something rule-based Python can do well.
+Uses         : AI (via Groq API) — natural language generation of specific, useful
+                advice is not something rule-based Python can do well.
 
 NOTE ON API KEY:
-Same as extraction.py — the Anthropic client reads ANTHROPIC_API_KEY from the
+Same as extraction.py — the Groq client reads GROQ_API_KEY from the
 environment, which is set from st.secrets in app.py. No key is hardcoded here.
 """
 
 import json
 import re
-import anthropic
+from groq import Groq
 
-MODEL_NAME = "claude-sonnet-4-5"
+MODEL_NAME = "llama-3.3-70b-versatile"
 
 RECOMMENDATION_PROMPT = """You are an expert resume coach and ATS specialist.
 Based on the analysis data below, identify specific PROBLEMS with this resume
@@ -49,8 +49,8 @@ Resume text (for context on structure/tone):
 """
 
 
-def _get_client() -> anthropic.Anthropic:
-    return anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from env automatically
+def _get_client() -> Groq:
+    return Groq()  # reads GROQ_API_KEY from env automatically
 
 
 def generate_recommendations(scoring_result: dict, resume_text: str) -> dict:
@@ -79,15 +79,13 @@ def generate_recommendations(scoring_result: dict, resume_text: str) -> dict:
     )
 
     client = _get_client()
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=MODEL_NAME,
         max_tokens=1200,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    raw_text = "".join(
-        block.text for block in response.content if block.type == "text"
-    )
+    raw_text = response.choices[0].message.content
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
 
     try:
