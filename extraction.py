@@ -69,11 +69,22 @@ def _call_llm_for_json(client: Groq, prompt: str) -> dict:
     """Sends a prompt to the Groq-hosted model and parses the response as JSON."""
     response = client.chat.completions.create(
         model=MODEL_NAME,
-        max_tokens=1500,
+        max_tokens=3000,
+        temperature=0.3,
+        reasoning_effort="low",
+        reasoning_format="hidden",
         messages=[{"role": "user", "content": prompt}],
     )
 
     raw_text = response.choices[0].message.content
+
+    if not raw_text or not raw_text.strip():
+        finish_reason = response.choices[0].finish_reason
+        raise ValueError(
+            f"Model returned empty content (finish_reason={finish_reason}). "
+            "This usually means the reasoning phase used up the token budget — "
+            "try increasing max_tokens."
+        )
 
     # Strip markdown fences if the model added them despite instructions
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
