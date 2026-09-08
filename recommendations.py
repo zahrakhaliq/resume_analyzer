@@ -81,11 +81,23 @@ def generate_recommendations(scoring_result: dict, resume_text: str) -> dict:
     client = _get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME,
-        max_tokens=1200,
+        max_tokens=2500,
+        temperature=0.3,
+        reasoning_effort="low",
+        reasoning_format="hidden",
         messages=[{"role": "user", "content": prompt}],
     )
 
     raw_text = response.choices[0].message.content
+
+    if not raw_text or not raw_text.strip():
+        finish_reason = response.choices[0].finish_reason
+        raise ValueError(
+            f"Model returned empty content (finish_reason={finish_reason}). "
+            "This usually means the reasoning phase used up the token budget — "
+            "try increasing max_tokens."
+        )
+
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
 
     try:
